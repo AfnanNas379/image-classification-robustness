@@ -48,7 +48,7 @@ This is broken down into four research questions:
 ## Repository Structure
 
 ```
-report/    Phase I report (PDF and LaTeX source)
+report/    Phase I report (PDF and LaTeX source: https://www.overleaf.com/read/gkvwdgctzkfn#c422ed)
 src/       Data pipeline, degradation generator, training and evaluation code (planned for Phase II)
 results/   Accuracy tables, plots, and comparison outputs (planned for Phase II)
 ```
