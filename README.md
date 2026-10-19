@@ -3,57 +3,64 @@
 **CS 421 — Comparative Study Track (Track 2)**
 King Faisal University, College of Computer Sciences & Information Technology
 
-## Overview
-
-This project investigates which image classification architecture — a plain CNN, ResNet-18, or a Vision Transformer (ViT) — best maintains its accuracy when input images are degraded by blur, noise, reduced resolution, or JPEG compression. Rather than comparing clean-image accuracy alone, the study measures how much each model's performance drops from its own clean baseline, to separate genuine robustness from differences in raw classification strength.
-
-## Research Question
-
-Which architecture is most robust to real-world image degradation, and does robustness depend on the type and severity of degradation applied?
-
-This is broken down into four research questions:
-
-- **RQ1:** How does accuracy change with severity for each degradation?
-- **RQ2:** Which architecture shows the smallest relative drop after controlling for clean accuracy?
-- **RQ3:** Does the robustness ranking depend on the degradation type?
-- **RQ4:** Which architectural properties best explain the differences?
+We compare how well a **plain CNN** (baseline), **ResNet-18** and a **Vision Transformer (ViT)** keep their accuracy when test images are degraded by **Gaussian blur, Gaussian noise, reduced resolution and JPEG compression**. All three models are trained **from scratch on CIFAR-10 with one shared recipe**, so only the architecture differs.
 
 ## Team
 
-**Group [NN], Section 64**
+**Group 2, Section 64** · Instructor: Dr. Hala Mohamed Hamdoun
 
-| Name | Student ID |
-|---|---|
-| Afnan Hashed Ahmed Nasser | 223049806 |
-| Lulu Abdullah Abdulaziz AlMaghlouth | 223036019 |
-| Batool Hassan Jawad Alawadh | 219020376 |
+| Member | Student ID | Phase II responsibility |
+|---|---|---|
+| Afnan Hashed Ahmed Nasser | 223049806 | Data pipeline and degraded test sets (`src/data.py`, `src/degradations.py`, `scripts/make_degraded.py`) |
+| Lulu Abdullah Abdulaziz AlMaghlouth | 223036019 | Models and training (`src/models.py`, `src/train.py`) |
+| Batool Hassan Jawad Alawadh | 219020376 | Evaluation, metrics and figures (`src/evaluate.py`, `src/metrics.py`, `src/plots.py`) |
 
-**Instructor:** Dr. Hala Mohamed Hamdoun
+## Reproducing the results
 
-## Phase I — Literature Survey and Experimental Design
+**Easiest: Google Colab.** Open `notebooks/colab_run.ipynb` in Colab, select a T4 GPU, and run all cells. Checkpoints are saved to Google Drive; if Colab disconnects, run the cells again and training resumes from the last epoch with identical results.
 
-- **Literature review:** 10 peer-reviewed studies, organized into three themes: robustness benchmarking, CNN-versus-Transformer robustness, and mechanisms and training factors (frequency sensitivity, patch/positional-embedding effects, pretraining and training-recipe confounds). The review concludes with five limitations (L1–L5) of existing experimental studies and explains why a new, controlled comparison is needed.
-- **Experimental design:** task definition, dataset, candidate models and baseline, degradation conditions, and evaluation metrics.
+**Locally (GPU recommended):**
 
-## Experimental Design Summary
+```bash
+pip install -r requirements.txt
+python -m scripts.make_degraded                       # downloads CIFAR-10, builds the 13 test sets
+for s in 0 1 2; do for m in plain_cnn resnet18 vit; do
+  python -m src.train --model $m --seed $s --out runs
+done; done
+python -m src.evaluate --runs runs --out results       # metrics + LaTeX tables
+python -m src.plots --results results --runs runs --out results/figures
+```
+
+**Checks (CPU, no download):** `python -m tests.smoke_test` runs the full pipeline on synthetic images; `python -m tests.resume_check` verifies that an interrupted run resumes to identical weights.
+
+## Experimental setup
 
 | Component | Choice |
 |---|---|
-| Dataset | CIFAR-10 (60,000 images, 32×32, 10 classes) at native resolution; 45,000 train / 5,000 validation / 10,000 test |
-| Models | Plain CNN (~1.15M params, baseline), ResNet-18 (~11.2M), ViT with 4×4 patches (~12.5M); ResNet-18 and ViT are parameter-matched, the plain CNN is a compact baseline |
-| Training | All models trained from scratch (no pretraining) under one shared training recipe |
-| Degradations | Gaussian blur, Gaussian noise, reduced resolution, JPEG compression — 3 severity levels each, plus clean (13 test conditions) |
-| Metrics | Accuracy, absolute and relative accuracy drop, CE, CmCE, ECE, ACD |
+| Dataset | CIFAR-10 ([source](https://www.cs.toronto.edu/~kriz/cifar.html)), 32×32, 10 classes; stratified split 45,000 train / 5,000 validation (seed 42) / 10,000 test |
+| Preprocessing | Per-channel normalization with training-subset statistics, applied **after** degradation; training augmentation: random crop (4-px zero padding) + horizontal flip |
+| Models | Plain CNN (1,148,874 params), ResNet-18 (11,173,962), ViT 4×4 patches, D=384, 7 blocks, 6 heads (12,470,026) |
+| Shared recipe | AdamW (β=0.9, 0.999), lr 1e-3, weight decay 0.05, batch 128, 100 epochs, 5-epoch warm-up + cosine decay, gradient clipping 1.0, mixed precision; best clean-validation checkpoint |
+| Seeds | 0, 1, 2 for every model (9 runs) |
+| Test conditions | Clean + blur σ∈{0.5,1.0,1.5}, noise σ∈{0.04,0.08,0.12}, resolution {24,16,8}px, JPEG Q∈{60,30,10} = 13 sets, generated once (seed 1234) with SHA-256 checksums |
+| Metrics | Accuracy, absolute drop ΔA, relative drop RD (primary), CE/mCE vs plain CNN, CmCE (α=0.1), ECE (15 bins), ACD |
 
-## Repository Structure
+All settings are in [`configs/default.yaml`](configs/default.yaml).
+
+## Repository structure
 
 ```
-report/    Phase I report (PDF and LaTeX source: https://www.overleaf.com/read/gkvwdgctzkfn#c422ed)
-src/       Data pipeline, degradation generator, training and evaluation code (planned for Phase II)
-results/   Accuracy tables, plots, and comparison outputs (planned for Phase II)
+configs/default.yaml      shared configuration for all models
+src/                      data, degradations, models, training, evaluation, metrics, plots
+scripts/make_degraded.py  generates the 13 fixed test sets
+notebooks/colab_run.ipynb end-to-end Colab notebook
+tests/                    smoke test and resume check
+runs/                     per-run training logs and metadata (checkpoints not committed)
+results/                  metric CSVs, LaTeX tables and figures
+report/                   Phase I and Phase II reports (main.tex, references.bib, figures/)
 ```
 
 ## Status
 
-- ✅ **Phase I:** Literature review and experimental design complete.
-- 🚧 **Phase II:** Implementation and experiments not yet started.
+- ✅ Phase I: literature review and experimental design.
+- 🚧 Phase II: code complete and tested; training and evaluation in progress.

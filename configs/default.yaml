@@ -1,0 +1,44 @@
+# Shared experimental configuration (identical for every model).
+# Changing any value here changes the experiment for ALL models.
+
+data:
+  root: data                 # where CIFAR-10 is downloaded
+  degraded_dir: data/degraded
+  val_per_class: 500         # 10 classes x 500 = 5,000 validation images
+  split_seed: 42             # fixed seed for the train/validation split
+  degradation_seed: 1234     # fixed seed for Gaussian noise generation
+
+train:
+  epochs: 100
+  batch_size: 128
+  optimizer: adamw
+  lr: 0.001                  # peak learning rate
+  weight_decay: 0.05         # not applied to biases and normalization weights
+  betas: [0.9, 0.999]
+  warmup_epochs: 5           # linear warm-up, then cosine decay
+  min_lr: 0.000001
+  grad_clip: 1.0
+  label_smoothing: 0.0
+  amp: true                  # mixed precision on GPU
+  augmentation:
+    random_crop_padding: 4   # zero padding, then random 32x32 crop
+    horizontal_flip: true
+  seeds: [0, 1, 2]
+
+models:
+  plain_cnn:
+    dropout: 0.3
+  resnet18: {}
+  vit:
+    patch_size: 4
+    dim: 384
+    depth: 7
+    heads: 6
+    mlp_dim: 1536
+    dropout: 0.1
+
+eval:
+  batch_size: 500
+  ece_bins: 15
+  chance_accuracy: 0.10      # alpha in CmCE (10 classes)
+  reference_model: plain_cnn # reference for Corruption Error (CE)
