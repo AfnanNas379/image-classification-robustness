@@ -40,7 +40,7 @@ python -m src.plots --results results --runs runs --out results/figures
 | Dataset | CIFAR-10 ([source](https://www.cs.toronto.edu/~kriz/cifar.html)), 32×32, 10 classes; stratified split 45,000 train / 5,000 validation (seed 42) / 10,000 test |
 | Preprocessing | Per-channel normalization with training-subset statistics, applied **after** degradation; training augmentation: random crop (4-px zero padding) + horizontal flip |
 | Models | Plain CNN (1,148,874 params), ResNet-18 (11,173,962), ViT 4×4 patches, D=384, 7 blocks, 6 heads (12,470,026) |
-| Shared recipe | AdamW (β=0.9, 0.999), lr 1e-3, weight decay 0.05, batch 128, 100 epochs, 5-epoch warm-up + cosine decay, gradient clipping 1.0, mixed precision; best clean-validation checkpoint |
+| Shared recipe | AdamW (β=0.9, 0.999), lr 5e-4, weight decay 0.05, batch 128, 100 epochs, 10-epoch warm-up + cosine decay, gradient clipping 1.0, mixed precision; best clean-validation checkpoint |
 | Seeds | 0, 1, 2 for every model (9 runs) |
 | Test conditions | Clean + blur σ∈{0.5,1.0,1.5}, noise σ∈{0.04,0.08,0.12}, resolution {24,16,8}px, JPEG Q∈{60,30,10} = 13 sets, generated once (seed 1234) with SHA-256 checksums |
 | Metrics | Accuracy, absolute drop ΔA, relative drop RD (primary), CE/mCE vs plain CNN, CmCE (α=0.1), ECE (15 bins), ACD |
