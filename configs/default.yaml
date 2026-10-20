@@ -12,10 +12,10 @@ train:
   epochs: 100
   batch_size: 128
   optimizer: adamw
-  lr: 0.001                  # peak learning rate
+  lr: 0.0005                 # peak learning rate (lowered from 1e-3 after ViT instability, see README)
   weight_decay: 0.05         # not applied to biases and normalization weights
   betas: [0.9, 0.999]
-  warmup_epochs: 5           # linear warm-up, then cosine decay
+  warmup_epochs: 10           # linear warm-up, then cosine decay
   min_lr: 0.000001
   grad_clip: 1.0
   label_smoothing: 0.0
