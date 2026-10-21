@@ -91,10 +91,15 @@ def train(model_name: str, seed: int, cfg: dict, out_root: str, max_train=None, 
     start_epoch, best_acc, best_epoch = 0, -1.0, -1
     last = os.path.join(run_dir, "last.pt")
     if os.path.exists(last):                          # resume after a Colab disconnect
-        ck = torch.load(last, map_location=dev)
+        # Load on CPU: random-number-generator states must stay CPU ByteTensors
+        # (loading them onto the GPU caused "RNG state must be a torch.ByteTensor").
+        # model/optimizer states are moved to the GPU by load_state_dict.
+        ck = torch.load(last, map_location="cpu", weights_only=False)
         model.load_state_dict(ck["model"]); opt.load_state_dict(ck["opt"]); scaler.load_state_dict(ck["scaler"])
-        gen.set_state(ck["gen"].cpu() if dev.type == "cpu" else ck["gen"])
+        gen.set_state(ck["gen"])
         torch.set_rng_state(ck["torch_rng"])
+        if dev.type == "cuda" and ck.get("cuda_rng") is not None:   # older checkpoints do not have it
+            torch.cuda.set_rng_state(ck["cuda_rng"])
         start_epoch, best_acc, best_epoch = ck["epoch"] + 1, ck["best_acc"], ck["best_epoch"]
         print(f"[resume] from epoch {start_epoch}")
 
@@ -140,7 +145,8 @@ def train(model_name: str, seed: int, cfg: dict, out_root: str, max_train=None, 
             torch.save({"model": model.state_dict(), "mean": mean, "std": std, "epoch": best_epoch,
                         "val_acc": best_acc}, os.path.join(run_dir, "best.pt"))
         torch.save({"model": model.state_dict(), "opt": opt.state_dict(), "scaler": scaler.state_dict(),
-                    "gen": gen.get_state(), "torch_rng": torch.get_rng_state(), "epoch": epoch,
+                    "gen": gen.get_state(), "torch_rng": torch.get_rng_state(),
+                    "cuda_rng": torch.cuda.get_rng_state() if dev.type == "cuda" else None, "epoch": epoch,
                     "best_acc": best_acc, "best_epoch": best_epoch}, last)
         print(f"ep {epoch+1:3d}/{epochs} loss {loss_sum/seen:.3f} train {correct/seen:.3f} "
               f"val {va_acc:.4f} best {best_acc:.4f}@{best_epoch} ({secs:.0f}s)")
