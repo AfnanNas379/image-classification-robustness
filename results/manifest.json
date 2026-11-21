@@ -1,0 +1,150 @@
+{
+  "seed": 1234,
+  "n_images": 10000,
+  "conditions": [
+    {
+      "name": "clean",
+      "type": "clean",
+      "level": 0,
+      "params": {},
+      "psnr_db": Infinity,
+      "ssim": 1.0,
+      "sha256": "42eab41b33193fcbe9ec144ac4faf6963080608c16802be82712b84237de8713"
+    },
+    {
+      "name": "blur_1",
+      "type": "blur",
+      "level": 1,
+      "params": {
+        "sigma": 0.5,
+        "kernel": 5
+      },
+      "psnr_db": 34.76011327839202,
+      "ssim": 0.9858614861280844,
+      "sha256": "13bed9030f94d74bdb65471696c2e017a51427ed2aec586c8e9f3c8b3235708d"
+    },
+    {
+      "name": "blur_2",
+      "type": "blur",
+      "level": 2,
+      "params": {
+        "sigma": 1.0,
+        "kernel": 7
+      },
+      "psnr_db": 25.435978799631894,
+      "ssim": 0.8655489987340749,
+      "sha256": "38f200740ebc6b6deaf770ff14e23d3dff0f379657d47ce7fa8e6ba5657bc39b"
+    },
+    {
+      "name": "blur_3",
+      "type": "blur",
+      "level": 3,
+      "params": {
+        "sigma": 1.5,
+        "kernel": 11
+      },
+      "psnr_db": 22.6041117833293,
+      "ssim": 0.7363536782990111,
+      "sha256": "f23f1b874b394ff9f287ef336abe3a512a7705bf1b326b9f198ff43b3df08bc8"
+    },
+    {
+      "name": "noise_1",
+      "type": "noise",
+      "level": 1,
+      "params": {
+        "std": 0.04
+      },
+      "psnr_db": 28.088655342093634,
+      "ssim": 0.8914249503921164,
+      "sha256": "49a0c3ca86603716dab6ee156e170a05bd819029a2c92117569b6b4662b4715d"
+    },
+    {
+      "name": "noise_2",
+      "type": "noise",
+      "level": 2,
+      "params": {
+        "std": 0.08
+      },
+      "psnr_db": 22.189219213742955,
+      "ssim": 0.7402581230085225,
+      "sha256": "866fcac56cf4cbfe6cda864d95ca26bb8890782b97c32a9f4783eeb03d0d45d6"
+    },
+    {
+      "name": "noise_3",
+      "type": "noise",
+      "level": 3,
+      "params": {
+        "std": 0.12
+      },
+      "psnr_db": 18.82196100816654,
+      "ssim": 0.6124057545174952,
+      "sha256": "0c4cd6984559459f5dd941e88be743fbbc5ebe1ab94c279cbb360c7d8b6a3c47"
+    },
+    {
+      "name": "lowres_1",
+      "type": "lowres",
+      "level": 1,
+      "params": {
+        "size": 24
+      },
+      "psnr_db": 31.13282024782044,
+      "ssim": 0.9628356705499249,
+      "sha256": "b61a5e35d136f8a6b7c86cbd35625cf13d7706ca34a65b7e6c2d9d471bfeff88"
+    },
+    {
+      "name": "lowres_2",
+      "type": "lowres",
+      "level": 2,
+      "params": {
+        "size": 16
+      },
+      "psnr_db": 26.08261711663617,
+      "ssim": 0.8820759516836549,
+      "sha256": "9749bf09910007add164fd0b1ceccda989c099b58233a1a63faa42e45c1a730b"
+    },
+    {
+      "name": "lowres_3",
+      "type": "lowres",
+      "level": 3,
+      "params": {
+        "size": 8
+      },
+      "psnr_db": 21.137202132516528,
+      "ssim": 0.6332399605642213,
+      "sha256": "a10b463dc74a4cc1e7c6d81c015554d35d5d4610a36c396682049943e61b9b08"
+    },
+    {
+      "name": "jpeg_1",
+      "type": "jpeg",
+      "level": 1,
+      "params": {
+        "quality": 60
+      },
+      "psnr_db": 29.018660032427025,
+      "ssim": 0.929576765210251,
+      "sha256": "1b37e0c53cb0dd4b5705fdda8c4db9ab2c3808df7093c19fc8aa77659b0b3a56"
+    },
+    {
+      "name": "jpeg_2",
+      "type": "jpeg",
+      "level": 2,
+      "params": {
+        "quality": 30
+      },
+      "psnr_db": 26.819626619480555,
+      "ssim": 0.8940886163355714,
+      "sha256": "b6833172a87c024ab77873874471a694f6fecef8e741e0d42803eaf77f01e3a0"
+    },
+    {
+      "name": "jpeg_3",
+      "type": "jpeg",
+      "level": 3,
+      "params": {
+        "quality": 10
+      },
+      "psnr_db": 23.34015723138349,
+      "ssim": 0.8012251275128512,
+      "sha256": "3b28ada5dd4073dd6330935d4aaad34bd7ac81a66bd43c961ff1dc9cbecdca40"
+    }
+  ]
+}

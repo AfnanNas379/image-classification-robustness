@@ -1,0 +1,90 @@
+{
+  "model": "plain_cnn",
+  "seed": 1,
+  "params": 1148874,
+  "mean": [
+    0.4918399453163147,
+    0.48254120349884033,
+    0.44681957364082336
+  ],
+  "std": [
+    0.24705073237419128,
+    0.2435421198606491,
+    0.26169222593307495
+  ],
+  "epochs": 100,
+  "device": "cuda",
+  "gpu": "Tesla T4",
+  "torch": "2.11.0+cu130",
+  "split": {
+    "train": 45000,
+    "val": 5000,
+    "val_per_class": [
+      500,
+      500,
+      500,
+      500,
+      500,
+      500,
+      500,
+      500,
+      500,
+      500
+    ],
+    "overlap": 0
+  },
+  "config": {
+    "data": {
+      "root": "data",
+      "degraded_dir": "data/degraded",
+      "val_per_class": 500,
+      "split_seed": 42,
+      "degradation_seed": 1234
+    },
+    "train": {
+      "epochs": 100,
+      "batch_size": 128,
+      "optimizer": "adamw",
+      "lr": 0.0005,
+      "weight_decay": 0.05,
+      "betas": [
+        0.9,
+        0.999
+      ],
+      "warmup_epochs": 10,
+      "min_lr": 1e-06,
+      "grad_clip": 1.0,
+      "label_smoothing": 0.0,
+      "amp": true,
+      "augmentation": {
+        "random_crop_padding": 4,
+        "horizontal_flip": true
+      },
+      "seeds": [
+        0,
+        1,
+        2
+      ]
+    },
+    "models": {
+      "plain_cnn": {
+        "dropout": 0.3
+      },
+      "resnet18": {},
+      "vit": {
+        "patch_size": 4,
+        "dim": 384,
+        "depth": 7,
+        "heads": 6,
+        "mlp_dim": 1536,
+        "dropout": 0.1
+      }
+    },
+    "eval": {
+      "batch_size": 500,
+      "ece_bins": 15,
+      "chance_accuracy": 0.1,
+      "reference_model": "plain_cnn"
+    }
+  }
+}
