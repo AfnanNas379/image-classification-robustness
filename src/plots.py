@@ -48,7 +48,7 @@ def severity_curves(df, value, ylabel, out, name, scale=100):
                         markersize=4, linewidth=1.2, label=NAMES[m], **STYLE[m])
         ax.set_title(TYPE_LABEL[t]); ax.set_xticks([0, 1, 2, 3])
     axes[0].set_ylabel(ylabel)
-    fig.supxlabel("Severity level (0 = clean)", fontsize=9, y=0.0)
+    fig.supxlabel("Severity level (0 = clean)", fontsize=9, y=-0.06)
     axes[0].legend(frameon=False, fontsize=7)
     _save(fig, out, name)
 
