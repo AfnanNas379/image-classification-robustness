@@ -12,12 +12,6 @@
 \urlstyle{same}
 \graphicspath{{figures/}}
 
-% ------------------------------------------------------------------
-% DRAFT MARKERS: every \tbd{...} is a value or passage still to be
-% filled in after the final evaluation. Search for "\tbd" before
-% submitting; the final PDF must contain no red text.
-% ------------------------------------------------------------------
-\newcommand{\tbd}[1]{\textcolor{red}{\textbf{[TBD: #1]}}}
 
 \begin{document}
 
@@ -38,7 +32,7 @@ College of Computer Sciences \& Information Technology, King Faisal University, 
 \maketitle
 
 \begin{abstract}
-We implement and evaluate the comparative study designed in Phase I: a plain CNN (baseline), ResNet-18 and a Vision Transformer (ViT), all trained from scratch on CIFAR-10 with one shared training recipe, so that only the architecture differs. Each model is trained with three random seeds (nine runs) and evaluated on 13 fixed test conditions: the clean test set and Gaussian blur, Gaussian noise, reduced resolution and JPEG compression at three severities each. Robustness is measured by the absolute and relative accuracy drop, corruption error relative to the baseline, the calibrated mean corruption error, and two confidence measures (ECE and ACD). On clean validation data, ResNet-18 reaches \tbd{x}\%, the plain CNN \tbd{x}\% and the ViT \tbd{x}\% (mean over three seeds). \tbd{one or two sentences with the main robustness finding}. The full pipeline, logs and results are released in the project repository and can be reproduced with a single notebook.
+We implement and evaluate the comparative study designed in Phase I: a plain CNN (baseline), ResNet-18 and a Vision Transformer (ViT), all trained from scratch on CIFAR-10 with one shared training recipe, so that only the architecture differs. Each model is trained with three random seeds (nine runs) and evaluated on 13 fixed test conditions: the clean test set and Gaussian blur, Gaussian noise, reduced resolution and JPEG compression at three severities each. Robustness is measured by the absolute and relative accuracy drop, corruption error relative to the baseline, the calibrated mean corruption error, and two confidence measures (ECE and ACD). On clean validation data, ResNet-18 reaches 94.26\%, the plain CNN 91.90\% and the ViT 85.06\% (mean over three seeds). On the clean test set the ranking is the same, but under degradation it reverses: the ViT keeps the highest accuracy and loses only 33.3\% of its clean accuracy, against 43.4\% for ResNet-18 and 44.2\% for the plain CNN, with the largest advantage under noise and none for JPEG. ResNet-18 is no more robust than the plain CNN once clean accuracy is controlled for, and all models are systematically overconfident on degraded images. The full pipeline, logs and results are released in the project repository and can be reproduced with a single notebook.
 \end{abstract}
 
 \begin{IEEEkeywords}
@@ -98,7 +92,7 @@ ViT~\cite{dosovitskiy2021} & $4\times4$ patches (64 tokens + [CLS]), $D = 384$, 
 \subsection{Rationale for the Comparison}
 The comparison is designed so that \emph{only the architecture varies}. All three models see the same 45{,}000 training images in the same order for a given seed, use the same optimizer, schedule, augmentation and epoch budget, are selected by the same criterion, and are tested on the same stored degraded images. This addresses L1 (no pretraining, one recipe), L2 (plain CNN, ResNet and ViT in one pipeline), L3 (native $32\times32$ data without upsampling), L4 (RD and CmCE remove the dependence on clean accuracy; ECE and ACD measure confidence) and L5 (four degradation types, including reduced resolution, with severities checked by PSNR and SSIM~\cite{wang2004}). Three seeds per model make it possible to separate architectural effects from training noise.
 
-\subsection{Evaluation Metrics}
+\subsection{Evaluation Metrics}\label{sec:metrics}
 For model $m$, degradation $c$ and severity $s$, with $N = 10{,}000$ test images:
 \begin{align}
 \mathrm{Acc}_{m,c,s} &= \tfrac{1}{N}\textstyle\sum_{i=1}^{N} \mathbf{1}\!\left[\hat{y}_m\big(T_{c,s}(x_i)\big) = y_i\right] \label{eq:acc}\\
@@ -129,7 +123,7 @@ The complete experiment is run by the notebook \texttt{notebooks/colab\_run.ipyn
 \item \textbf{Setup.} Clone the repository, install the pinned requirements and link \texttt{data/}, \texttt{runs/} and \texttt{results/} to persistent storage.
 \item \textbf{Data and test sets.} The script \texttt{scripts/make\_degraded.py} downloads CIFAR-10, creates the stratified train/validation split (seed 42), verifies it (no overlap, no missing images, 500 validation images per class), applies the 13 conditions to the 10{,}000 test images (seed 1234), and stores each condition with its SHA-256 checksum and mean PSNR and SSIM in a manifest.
 \item \textbf{Training} (\texttt{python -m src.train --model $m$ --seed $k$}). Train one model with one seed for 100 epochs. After every epoch the script appends a row to \texttt{log.csv}, saves the best checkpoint (\texttt{best.pt}) and a full resume checkpoint (\texttt{last.pt}) with model, optimizer, scaler and random-number-generator states. A finished run is marked by \texttt{done.json}; \texttt{meta.json} records the configuration, split check, normalization statistics, software version and GPU.
-\item \textbf{Evaluation} (\texttt{python -m src.evaluate}). Load each finished \texttt{best.pt}, predict all 13 stored test sets, and save per-condition accuracy, mean confidence, ECE and NLL, the predictions of every image, the summary metrics of Section~II-C, and the booktabs \LaTeX\ tables used in this report.
+\item \textbf{Evaluation} (\texttt{python -m src.evaluate}). Load each finished \texttt{best.pt}, predict all 13 stored test sets, and save per-condition accuracy, mean confidence, ECE and NLL, the predictions of every image, the summary metrics of Section~\ref{sec:metrics}, and the booktabs \LaTeX\ tables used in this report.
 \item \textbf{Figures} (\texttt{python -m src.plots}). Generate accuracy and ECE versus severity, RD per degradation type, training curves and degradation examples, as PDF and 300-dpi PNG with markers and line styles that remain distinguishable in greyscale.
 \item \textbf{Export.} Collect the CSV files, tables, figures, logs and manifest for the repository. Checkpoints and image arrays are not committed because of their size; they are regenerated deterministically by steps 2 and 3.
 \end{enumerate}
@@ -185,7 +179,14 @@ JPEG 3 & quality $Q = 10$ & 23.34 & 0.801 \\
 \end{tabular}
 \end{table}
 
-PSNR and SSIM rank the severities consistently. Within every type, distortion increases monotonically with the level, so comparisons of severity levels within a type are valid. Across types, however, equal level numbers do not mean equal distortion: at level~3, Gaussian noise is the harshest condition (18.82\,dB, SSIM 0.612), followed by reduced resolution (21.14\,dB, 0.633) and blur (22.60\,dB, 0.736), while JPEG is the mildest (23.34\,dB, 0.801). At level~1, blur is by far the mildest condition (34.76\,dB, 0.986) and noise again the strongest (28.09\,dB, 0.891). The JPEG levels are also closer together than those of the other types. Differences between degradation types must therefore be interpreted together with these distortion values rather than by level number alone.
+PSNR and SSIM rank the severities consistently. Within every type, distortion increases monotonically with the level, so comparisons of severity levels within a type are valid. Across types, however, equal level numbers do not mean equal distortion: at level~3, Gaussian noise is the harshest condition (18.82\,dB, SSIM 0.612), followed by reduced resolution (21.14\,dB, 0.633) and blur (22.60\,dB, 0.736), while JPEG is the mildest (23.34\,dB, 0.801). At level~1, blur is by far the mildest condition (34.76\,dB, 0.986) and noise again the strongest (28.09\,dB, 0.891). The JPEG levels are also closer together than those of the other types. Differences between degradation types must therefore be interpreted together with these distortion values rather than by level number alone. Fig.~\ref{fig:examples} shows three test images under all 13 conditions.
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=0.95\textwidth]{degradation_examples.pdf}
+\caption{Examples of the 13 test conditions for three CIFAR-10 test images (level 1 = mildest, level 3 = strongest).}
+\label{fig:examples}
+\end{figure*}
 
 % ============================================================
 % 6. EXPERIMENTAL SETUP
@@ -221,7 +222,7 @@ Model selection & best clean validation accuracy \\
 \end{tabular}
 \end{table}
 
-\subsection{Random Seeds and Determinism}
+\subsection{Random Seeds and Determinism}\label{sec:seeds}
 Three seeds are fixed independently: the data split (seed 42), the degraded test sets (seed 1234) and model training (seeds 0, 1 and 2 for every model). The training seed sets Python, NumPy and PyTorch generators and a dedicated generator for shuffling and augmentation, and cuDNN is set to deterministic mode. Because a resume checkpoint stores all generator states, an interrupted run continues with the same sequence of batches and augmentations; this is verified by an automated test (\texttt{tests/resume\_check.py}) in which an interrupted run and an uninterrupted run end with identical weights.
 
 \subsection{Hardware}
@@ -239,7 +240,7 @@ All models are implemented in PyTorch in \texttt{src/models.py} and checked by p
 The full training split is placed on the GPU as 8-bit tensors; each epoch draws a seeded permutation, augments each batch on the GPU, normalizes it and performs one AdamW step with the scheduled learning rate. After each epoch, validation loss and accuracy are computed on the 5{,}000 validation images. Testing is done only after training, with the selected \texttt{best.pt}: each stored test set is normalized with the training statistics and passed through the model in evaluation mode (dropout off, batch-norm in inference mode), and the softmax outputs are used for accuracy, confidence and calibration. Every metric is computed per seed, and the three seeds are then aggregated.
 
 \subsection{Verification}
-Two automated checks run on a CPU without downloading data: a smoke test that executes the whole pipeline (split check, test-set generation, training, evaluation, metrics, tables and figures) on synthetic images, and the resume check described in Section~VI-C. Before evaluation, each run folder was checked to contain exactly one \texttt{best.pt}, \texttt{done.json}, \texttt{log.csv} and \texttt{meta.json}, with 100 consecutive epochs in the log and a best epoch matching \texttt{done.json}.
+Two automated checks run on a CPU without downloading data: a smoke test that executes the whole pipeline (split check, test-set generation, training, evaluation, metrics, tables and figures) on synthetic images, and the resume check described in Section~\ref{sec:seeds}. Before evaluation, each run folder was checked to contain exactly one \texttt{best.pt}, \texttt{done.json}, \texttt{log.csv} and \texttt{meta.json}, with 100 consecutive epochs in the log and a best epoch matching \texttt{done.json}.
 
 \subsection{Challenges and Fixes}
 \textbf{ViT training instability.} With the first recipe (peak learning rate $10^{-3}$, 5-epoch warm-up), the ViT's validation accuracy collapsed to about 42--45\% during training and reached only 57\% after 100 epochs, while the CNNs trained normally. Because a recipe change for one model would break the fairness of the comparison, the shared recipe was changed for \emph{all} models to a peak learning rate of $5\times10^{-4}$ with a 10-epoch warm-up, and all runs were repeated from scratch. With the new recipe the ViT trained smoothly. The discarded first-recipe runs are archived separately and are not used in any result.
@@ -257,9 +258,10 @@ Afnan implemented the data pipeline and degraded test sets (\texttt{data.py}, \t
 % 8. RESULTS
 % ============================================================
 \section{Results}
+All results are means $\pm$ standard deviations over the three training seeds. Every model is evaluated on the same 13 stored test sets of 10{,}000 images, giving $9 \times 13 = 117$ evaluations; the complete per-seed and per-condition numbers are in \texttt{results/} in the repository.
 
 \subsection{Training}
-Table~\ref{tab:train} reports the best clean validation accuracy of every run. The seeds of each model agree within \tbd{0.5} pp, and the ranking ResNet-18 $>$ plain CNN $>$ ViT is the same for every seed. Training curves are shown in Fig.~\tbd{training\_curves}.
+Table~\ref{tab:train} reports the best clean validation accuracy of every run. The seeds of each model agree closely (range 0.28\,pp for ResNet-18, 0.50\,pp for the plain CNN and 1.20\,pp for the ViT; standard deviation at most 0.60\,pp), and the ranking ResNet-18 $>$ plain CNN $>$ ViT is the same for every seed. Fig.~\ref{fig:curves} shows that all three models converge smoothly under the shared recipe; the ViT learns more slowly and levels off 7--9\,pp lower, as expected for a Transformer trained from scratch on 45{,}000 images~\cite{dosovitskiy2021,kotyan2024}.
 
 \begin{table}[!t]
 \caption{Best Clean Validation Accuracy (\%) and Epoch per Run}
@@ -271,29 +273,154 @@ Table~\ref{tab:train} reports the best clean validation accuracy of every run. T
 \toprule
 \textbf{Model} & \textbf{Seed 0} & \textbf{Seed 1} & \textbf{Seed 2} & \textbf{Mean $\pm$ std} \\
 \midrule
-Plain CNN & 92.12 (93) & 91.96 (87) & \tbd{} & \tbd{} \\
-ResNet-18 & 94.30 (89) & 94.10 (92) & \tbd{} & \tbd{} \\
-ViT       & 85.62 (90) & 85.14 (98) & \tbd{} & \tbd{} \\
+Plain CNN & 92.12 (93) & 91.96 (87) & 91.62 (91) & $91.90 \pm 0.26$ \\
+ResNet-18 & 94.30 (89) & 94.10 (92) & 94.38 (91) & $94.26 \pm 0.14$ \\
+ViT       & 85.62 (90) & 85.14 (98) & 84.42 (97) & $85.06 \pm 0.60$ \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-\subsection{Robustness}
-\tbd{insert the overall results table generated in results/tables.tex (clean accuracy, $\Delta A$, RD, mCE, CmCE, ECE; mean $\pm$ std over 3 seeds), the RD-per-type table, and the figures accuracy\_vs\_severity, rd\_per\_type and ece\_vs\_severity from results/figures/. Describe for each figure what it shows, with the key numbers, answering RQ1 (severity), RQ2 (overall ranking by RD and CmCE) and RQ3 (ranking per degradation type).}
+\begin{figure}[!t]
+\centering
+\includegraphics[width=0.92\columnwidth]{training_curves.pdf}
+\caption{Clean validation accuracy during training (mean over three seeds; the shaded band shows the range across seeds).}
+\label{fig:curves}
+\end{figure}
+
+\subsection{Clean Accuracy and Overall Robustness}
+Table~\ref{tab:overall} summarizes the main results. On the clean test set, ResNet-18 is the most accurate model (93.66\%), followed by the plain CNN (91.21\%) and the ViT (84.54\%). Test accuracy is 0.5--0.7\,pp below validation accuracy for every model, so model selection did not overfit the validation set. The seed-to-seed standard deviation of clean test accuracy is 0.11--0.35\,pp.
+
+Under degradation, the order reverses. Averaged over the 12 degraded conditions, the ViT keeps 56.41\% accuracy, against 53.05\% for ResNet-18 and 50.90\% for the plain CNN, although it starts 7--9\,pp lower on clean images. Its relative drop is 33.27\%, about 10--11\,pp smaller than that of the two CNNs (43.35\% and 44.20\%). The ViT also has the lowest mCE (0.90) and relative mCE (0.71) and the highest calibrated score CmCE (0.62 against 0.50--0.51). ResNet-18 has a slightly lower absolute error than the plain CNN (mCE 0.96), but its relative mCE is 1.01: once its higher clean accuracy is accounted for, it loses as much accuracy as the baseline.
+
+\begin{table*}[!t]
+\caption{Overall Results on CIFAR-10 (Mean $\pm$ Std over 3 Seeds; Degraded Metrics Averaged over the 12 Degraded Conditions)}
+\label{tab:overall}
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{3.6pt}
+\begin{tabular}{@{}lcccccccc@{}}
+\toprule
+\textbf{Model} & \textbf{Clean Acc.} & \textbf{Degraded Acc.} & \textbf{$\boldsymbol{\Delta A}$} & \textbf{RD} $\downarrow$ & \textbf{mCE} $\downarrow$ & \textbf{Rel.\ mCE} $\downarrow$ & \textbf{CmCE} $\uparrow$ & \textbf{ECE} $\downarrow$ \\
+ & (\%) & (\%) & (pp) & (\%) & (ratio) & (ratio) & (0--1) & (\%) \\
+\midrule
+Plain CNN (baseline) & $91.21 \pm 0.11$ & $50.90 \pm 0.44$ & $40.32 \pm 0.54$ & $44.20 \pm 0.54$ & $1.00$ & $1.00$ & $0.50 \pm 0.01$ & $37.04 \pm 0.44$ \\
+ResNet-18 & $\mathbf{93.66 \pm 0.12}$ & $53.05 \pm 0.99$ & $40.61 \pm 1.10$ & $43.35 \pm 1.12$ & $0.96 \pm 0.01$ & $1.01 \pm 0.01$ & $0.51 \pm 0.01$ & $41.23 \pm 0.71$ \\
+ViT & $84.54 \pm 0.35$ & $\mathbf{56.41 \pm 0.47}$ & $\mathbf{28.13 \pm 0.75}$ & $\mathbf{33.27 \pm 0.76}$ & $\mathbf{0.90 \pm 0.02}$ & $\mathbf{0.71 \pm 0.03}$ & $\mathbf{0.62 \pm 0.01}$ & $\mathbf{35.33 \pm 0.54}$ \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+\subsection{Effect of Severity (RQ1)}
+Fig.~\ref{fig:acc} shows accuracy as a function of severity. Accuracy falls monotonically with severity for every model and every degradation, but not linearly. Blur is almost harmless at level~1 ($\sigma = 0.5$; drops of 1.6--2.9\,pp) and then collapses at level~2 ($\sigma = 1.0$): the plain CNN falls from 88.35\% to 38.86\% and ResNet-18 from 92.08\% to 40.69\%. Noise reduces CNN accuracy steeply from the first level, reaching 17.39\% (plain CNN) and 18.86\% (ResNet-18) at level~3, close to chance (10\%). JPEG produces the smallest and most gradual decline, ending at 43.6--45.0\% for all three models. The ViT's curves are flatter for blur, noise and reduced resolution beyond level~1, so its advantage grows with severity: at level~3 it is about 10--19\,pp ahead of both CNNs for blur, noise and resolution.
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=0.92\textwidth]{accuracy_vs_severity.pdf}
+\caption{Test accuracy versus severity for each degradation type (level 0 = clean test set; mean $\pm$ std over three seeds).}
+\label{fig:acc}
+\end{figure*}
+
+\subsection{Robustness per Degradation Type (RQ2, RQ3)}
+Table~\ref{tab:rdtype} and Fig.~\ref{fig:rd} give the relative drop per type. The ViT has the smallest RD for all four types, so the overall ranking does not depend on the degradation type. The size of its advantage does: it is largest for noise (33.24\% against 52.59\% and 55.82\%), clear for blur (about 9--10\,pp), and smaller for reduced resolution (about 5--7\,pp) and JPEG (about 5--6\,pp). ResNet-18 and the plain CNN differ by at most 3.2\,pp per type, in both directions: ResNet-18 is slightly better on noise and resolution and slightly worse on blur and JPEG.
+
+The corruption errors in Table~\ref{tab:cetype} separate absolute from relative robustness. In absolute terms (CE), the ViT's advantage is concentrated on noise (0.73) and blur (0.92); for JPEG its error equals the baseline's (CE $= 1.01$), so its lower RD for JPEG reflects its lower clean accuracy rather than higher degraded accuracy. Reduced resolution shows a crossover: at level~1 the ViT is clearly the weakest model (67.65\% against 80.86\% for the plain CNN and 86.72\% for ResNet-18), while at levels~2 and~3 it is the strongest (56.31\% and 30.17\%).
+
+\begin{table}[!t]
+\caption{Relative Accuracy Drop RD per Degradation Type (\%, Mean $\pm$ Std over 3 Seeds; Lower Is More Robust)}
+\label{tab:rdtype}
+\centering
+\scriptsize
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}lcccc@{}}
+\toprule
+\textbf{Model} & \textbf{Blur (\%)} & \textbf{Noise (\%)} & \textbf{Low res.\ (\%)} & \textbf{JPEG (\%)} \\
+\midrule
+Plain CNN & $44.93 \pm 0.99$ & $55.82 \pm 0.31$ & $45.79 \pm 1.32$ & $30.26 \pm 0.28$ \\
+ResNet-18 & $45.56 \pm 1.95$ & $52.59 \pm 2.32$ & $43.84 \pm 2.15$ & $31.42 \pm 1.22$ \\
+ViT & $\mathbf{35.62 \pm 0.70}$ & $\mathbf{33.24 \pm 1.35}$ & $\mathbf{39.22 \pm 0.72}$ & $\mathbf{24.99 \pm 0.41}$ \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\begin{table}[!t]
+\caption{Corruption Error Relative to the Plain CNN and Accuracy--Confidence Divergence per Degradation Type (Mean over 3 Seeds)}
+\label{tab:cetype}
+\centering
+\footnotesize
+\renewcommand{\arraystretch}{1.15}
+\setlength{\tabcolsep}{4pt}
+\begin{tabular}{@{}llcccc@{}}
+\toprule
+\textbf{Metric} & \textbf{Model} & \textbf{Blur} & \textbf{Noise} & \textbf{Low res.} & \textbf{JPEG} \\
+\midrule
+CE (ratio) & ResNet-18 & 0.98 & 0.93 & 0.94 & 0.98 \\
+           & ViT       & 0.92 & 0.73 & 0.96 & 1.01 \\
+\midrule
+Rel.\ CE (ratio) & ResNet-18 & 1.04 & 0.97 & 0.98 & 1.07 \\
+                 & ViT       & 0.74 & 0.55 & 0.79 & 0.77 \\
+\midrule
+$D_c$ (pp) & Plain CNN & $-38.5$ & $-44.3$ & $-38.7$ & $-26.6$ \\
+           & ResNet-18 & $-44.0$ & $-49.4$ & $-42.1$ & $-29.4$ \\
+           & ViT       & $-37.2$ & $-35.4$ & $-39.8$ & $-28.8$ \\
+\bottomrule
+\multicolumn{6}{@{}p{0.95\columnwidth}@{}}{\scriptsize The plain CNN is the reference (CE $=$ rel.\ CE $= 1$). $D_c < 0$ means overconfidence; $N_c = 3$ (all severities overconfident) for every model, type and seed.}
+\end{tabular}
+\end{table}
+
+\begin{figure}[!t]
+\centering
+\includegraphics[width=0.92\columnwidth]{rd_per_type.pdf}
+\caption{Relative accuracy drop per degradation type (mean $\pm$ std over three seeds; lower is more robust).}
+\label{fig:rd}
+\end{figure}
+
+\subsection{Confidence and Calibration}
+All models become strongly overconfident under degradation (Fig.~\ref{fig:ece}). On clean data, ResNet-18 is the best-calibrated model (ECE 4.89\%) and the ViT the worst (11.59\%). Under degradation this reverses: ResNet-18 has the highest mean ECE (41.23\%) and the ViT the lowest (35.33\%). ResNet-18's mean confidence stays at 92--94\% at level~3 of blur, noise and resolution while its accuracy is 18--20\%. The accuracy--confidence divergence $D_c$ is negative for every model and type, and the sign is the same at all three severities ($N_c = 3$) in all 36 model--seed--type combinations, so the overconfidence is systematic rather than occasional (Table~\ref{tab:cetype}).
+
+\begin{figure*}[!t]
+\centering
+\includegraphics[width=0.92\textwidth]{ece_vs_severity.pdf}
+\caption{Expected Calibration Error (15 bins) versus severity for each degradation type (mean $\pm$ std over three seeds; lower is better).}
+\label{fig:ece}
+\end{figure*}
 
 % ============================================================
 % 9. DISCUSSION
 % ============================================================
 \section{Discussion}
-\tbd{to be written after the final evaluation. Planned points: (1) interpretation of the ranking and whether differences exceed seed variation; (2) why each architecture behaves as it does per degradation type (RQ4): local convolution and pooling vs.\ global attention on $4\times4$ patches, frequency content of each degradation, patch-embedding sensitivity~\cite{kim2023,liu2024}; (3) confidence behavior: accuracy falls much faster than confidence under strong degradation (overconfidence, ECE and ACD)~\cite{erkara2026,guo2017}; (4) the effect of unequal severity across types (Table~\ref{tab:degradations}).}
 
-\textbf{Limitations.} \tbd{finalize}: a single dataset at $32\times32$ resolution; three architectures of one size each; one training recipe, chosen to keep the ViT stable rather than tuned per model; only three seeds; synthetic degradations at three severities; severities matched by parameters, not by equal PSNR or SSIM; and one ViT run resumed without the CUDA generator state.
+\subsection{Interpretation of the Ranking}
+The main finding is that, when pretraining, data and recipe are held fixed, the ViT is the most robust of the three architectures, even though it is the least accurate on clean images. The gap to the CNNs in RD (about 10--11\,pp) is far larger than the seed standard deviations (at most 1.1\,pp), and the ViT also keeps the highest absolute accuracy under degradation, so the result is not an artifact of normalizing by a lower clean accuracy. In contrast, the difference between ResNet-18 and the plain CNN (0.85\,pp in RD) is within one standard deviation of ResNet-18's seeds and cannot be distinguished from training noise. Residual connections and greater depth improve clean accuracy by 2.5\,pp but do not change how much accuracy is lost under degradation. For CIFAR-10 trained from scratch, robustness therefore separates convolutional from attention-based models rather than shallow from deep ones.
+
+This partly agrees and partly disagrees with the literature. Studies that found Transformers more robust~\cite{dosovitskiy2021,erkara2026} mostly relied on large-scale pretraining. Bai \emph{et al.}~\cite{bai2021} found that with matched training the Transformer advantage disappears for adversarial attacks but remains for out-of-distribution data, and Wang \emph{et al.}~\cite{wang2023} showed that CNNs can close the gap when given Transformer-like design elements. Our results agree that an advantage for common corruptions remains without any pretraining and with an identical recipe, but show that it is limited to particular degradations: in absolute terms it is large for noise, moderate for blur, mixed for reduced resolution and absent for JPEG. Reporting a single averaged robustness score would hide this structure, which supports the per-type analysis planned in Phase I (L5).
+
+\subsection{Why the Architectures Differ (RQ4)}\label{sec:why}
+\textbf{Noise.} The largest difference is for Gaussian noise. Noise adds independent high-frequency perturbations to every pixel. The CNNs build their features from $3\times3$ filters that respond strongly to such local, high-frequency patterns, and errors in early layers are passed on to all later layers~\cite{hendrycks2019}. The ViT's first operation projects each $4\times4$ patch (48 values) linearly onto its embedding; this weighted sum over many pixels can attenuate independent per-pixel noise, and self-attention then combines information from all 64 patches. This is consistent with reports that CNNs depend more on high-frequency texture and Transformers more on lower-frequency, global structure~\cite{bai2021,liu2024,nam2024}.
+
+\textbf{Blur and resolution.} Strong blur and strong resolution loss remove exactly the fine detail on which the CNNs' local filters rely, and both CNNs collapse between levels~1 and~2. The ViT, which relates distant patches from the first layer, degrades more gradually. The exception is reduced resolution at level~1, where the ViT loses 17\,pp while the CNNs lose 7--10\,pp. Our experiments do not establish the cause. One possible explanation is that resampling by a factor of $4/3$ ($32 \to 24 \to 32$) creates an interpolation pattern that repeats every four pixels, the same period as the ViT's patch grid, so that every patch is distorted in the same systematic way; this would be consistent with the sensitivity of the patch embedding reported by Kim \emph{et al.}~\cite{kim2023}. Testing this, for example by shifting the patch grid or using other scale factors, is left for future work.
+
+\textbf{JPEG.} JPEG compression quantizes $8\times8$ blocks and mainly removes high-frequency detail while keeping block structure. All three models lose almost exactly the same accuracy, which suggests that, at these quality levels, the remaining information is equally usable by convolution and attention.
+
+\subsection{Confidence Behavior}
+No model knows when it is wrong under degradation: confidence decreases far more slowly than accuracy, and all models are overconfident at every severity, in line with the systematic overconfidence observed by Erkara and Mayer~\cite{erkara2026} on ImageNet models and the miscalibration of modern networks described by Guo \emph{et al.}~\cite{guo2017}. Notably, the best clean calibration (ResNet-18) does not carry over to degraded data, where ResNet-18 is the most overconfident model. Clean calibration is therefore not a reliable indicator of how trustworthy a model's confidence will be under distribution shift, which matters for any application that uses the softmax score to decide when to defer to a human.
+
+\subsection{Other Observations}
+ResNet-18 has the smallest seed variation on clean data (std 0.12\,pp) but the largest under degradation (up to 3.3\,pp per condition), whereas the ViT varies by at most 1.8\,pp. Equally accurate ResNet-18 models can therefore differ noticeably in robustness, which is a further reason to report several seeds. The cross-type comparison also has to take the unequal severities of Table~\ref{tab:degradations} into account: JPEG is the mildest degradation by PSNR and SSIM and causes the smallest drops, and noise is the harshest at every level and causes the largest drops for the CNNs, but not for the ViT, whose RD for noise is lower than for blur or resolution.
+
+\subsection{Limitations}
+The study uses a single dataset at $32\times32$ resolution and three architectures of one size each, so the results may not transfer to larger images, larger models or pretrained models. A single training recipe was used; it was chosen to keep the ViT stable rather than tuned for each model, and a different recipe could change clean accuracy and possibly robustness. The ViT is 7--9\,pp less accurate on clean data, and we cannot fully separate the effect of the architecture from the effect of a less closely fitted model; RD, CmCE and the absolute degraded accuracy all favor the ViT, which reduces but does not remove this concern. Three seeds give a useful estimate of variability but do not allow formal significance testing. The degradations are synthetic, applied at three severities chosen by parameter rather than by equal PSNR or SSIM, and do not include other corruption families (e.g., weather or contrast). The explanations in Section~\ref{sec:why} are hypotheses consistent with the data and the literature, not tested mechanisms. Finally, one ViT run (seed 0) was resumed from a checkpoint without the CUDA generator state, so it is not bit-identical to an uninterrupted run.
 
 % ============================================================
 % 10. CONCLUSION & FUTURE WORK
 % ============================================================
 \section{Conclusion and Future Work}
-Phase II implemented the controlled comparison designed in Phase I as a reproducible pipeline: a verified data split, 13 stored and checksummed test conditions, three models trained from scratch with one shared recipe and three seeds each, and an automated evaluation that produces every table and figure in this report. \tbd{summary of the main findings for RQ1--RQ4}. \tbd{honest statement of anything incomplete}. Future work includes \tbd{e.g., adding PreLayerNorm to the ViT to test the mechanism of Kim \emph{et al.}~\cite{kim2023}; robustness-oriented augmentation applied equally to all models~\cite{nam2024}; more seeds; CIFAR-10-C and larger or higher-resolution datasets; matching severities by measured distortion}.
+Phase II implemented the controlled comparison designed in Phase I as a reproducible pipeline: a verified data split, 13 stored and checksummed test conditions, three models trained from scratch with one shared recipe and three seeds each, and an automated evaluation that produces every table and figure in this report. All five success criteria were met: the full $9 \times 13$ matrix was evaluated (S1); all models reached the expected accuracy range (S2); clean test accuracy varied by at most 0.35\,pp across seeds (S3); RQ1--RQ3 were answered with all planned metrics (S4); and the results can be regenerated from the repository (S5).
+
+The results answer the research questions as follows. Accuracy falls monotonically but non-linearly with severity, with a sharp collapse for blur between levels~1 and~2 (RQ1). Once clean accuracy is controlled for, the ViT is the most robust model, with a relative drop of 33.3\% against 43.4\% for ResNet-18 and 44.2\% for the plain CNN, while ResNet-18 is no more robust than the baseline (RQ2). The ranking is the same for every degradation type, but the size of the ViT's advantage depends strongly on the type: it is largest for noise, absent in absolute terms for JPEG, and reversed for mild resolution loss (RQ3). The differences are consistent with the CNNs' dependence on local, high-frequency features and the ViT's patch averaging and global attention (RQ4), and all models are systematically overconfident under degradation.
+
+What remains incomplete: the proposed mechanisms, in particular for the ViT's weakness at mild resolution loss, were not tested experimentally; no formal significance tests were possible with three seeds; and the study is limited to CIFAR-10. Future work includes adding PreLayerNorm to the ViT to test the mechanism of Kim \emph{et al.}~\cite{kim2023}; shifting the patch grid to test the resolution result; applying robustness-oriented augmentation such as FSDA equally to all models~\cite{nam2024}; using more seeds and severities matched by measured distortion; and extending the comparison to CIFAR-10-C~\cite{hendrycks2019} and to larger, higher-resolution datasets.
 
 % ============================================================
 % 11. REFERENCES
