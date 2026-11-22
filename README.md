@@ -60,7 +60,17 @@ results/                  metric CSVs, LaTeX tables and figures
 report/                   Phase I and Phase II reports (main.tex, references.bib, figures/)
 ```
 
+## Results (mean ± std over 3 seeds, CIFAR-10 test set)
+
+| Model | Clean acc. (%) | Degraded acc. (%) | RD (%) ↓ | mCE ↓ | CmCE ↑ | ECE (%) ↓ |
+|---|---|---|---|---|---|---|
+| Plain CNN (baseline) | 91.21 ± 0.11 | 50.90 ± 0.44 | 44.20 ± 0.54 | 1.00 | 0.50 ± 0.01 | 37.04 ± 0.44 |
+| ResNet-18 | **93.66 ± 0.12** | 53.05 ± 0.99 | 43.35 ± 1.12 | 0.96 ± 0.01 | 0.51 ± 0.01 | 41.23 ± 0.71 |
+| ViT | 84.54 ± 0.35 | **56.41 ± 0.47** | **33.27 ± 0.76** | **0.90 ± 0.02** | **0.62 ± 0.01** | **35.33 ± 0.54** |
+
+Degraded metrics are averaged over the 12 degraded conditions. The ViT is the least accurate model on clean images but the most robust under degradation, with the largest advantage under Gaussian noise and none under JPEG; ResNet-18 is no more robust than the plain CNN once clean accuracy is controlled for. All models are systematically overconfident on degraded images. Full per-condition results are in [`results/`](results/) and the discussion is in the Phase II report in [`report/`](report/).
+
 ## Status
 
 - ✅ Phase I: literature review and experimental design.
-- 🚧 Phase II: code complete and tested; training and evaluation in progress.
+- ✅ Phase II: implementation, 9 training runs (3 models × 3 seeds), evaluation on 13 conditions, and report.
