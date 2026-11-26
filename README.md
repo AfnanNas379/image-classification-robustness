@@ -28,7 +28,7 @@ for s in 0 1 2; do for m in plain_cnn resnet18 vit; do
   python -m src.train --model $m --seed $s --out runs
 done; done
 python -m src.evaluate --runs runs --out results       # metrics + LaTeX tables
-python -m src.plots --results results --runs runs --out results/figures
+python -m src.plots --results results --runs runs --degraded data/degraded --out results/figures
 ```
 
 **Checks (CPU, no download):** `python -m tests.smoke_test` runs the full pipeline on synthetic images; `python -m tests.resume_check` verifies that an interrupted run resumes to identical weights.
@@ -57,7 +57,7 @@ notebooks/colab_run.ipynb end-to-end Colab notebook
 tests/                    smoke test and resume check
 runs/                     per-run training logs and metadata (checkpoints not committed)
 results/                  metric CSVs, LaTeX tables and figures
-report/                   Phase I and Phase II reports (main.tex, references.bib, figures/)
+report/                   Phase II report: PDF, LaTeX source (main.tex, references.bib) and figures/
 ```
 
 ## Results (mean ± std over 3 seeds, CIFAR-10 test set)
@@ -68,7 +68,7 @@ report/                   Phase I and Phase II reports (main.tex, references.bib
 | ResNet-18 | **93.66 ± 0.12** | 53.05 ± 0.99 | 43.35 ± 1.12 | 0.96 ± 0.01 | 0.51 ± 0.01 | 41.23 ± 0.71 |
 | ViT | 84.54 ± 0.35 | **56.41 ± 0.47** | **33.27 ± 0.76** | **0.90 ± 0.02** | **0.62 ± 0.01** | **35.33 ± 0.54** |
 
-Degraded metrics are averaged over the 12 degraded conditions. The ViT is the least accurate model on clean images but the most robust under degradation, with the largest advantage under Gaussian noise and none under JPEG; ResNet-18 is no more robust than the plain CNN once clean accuracy is controlled for. All models are systematically overconfident on degraded images. Full per-condition results are in [`results/`](results/) and the discussion is in the Phase II report in [`report/`](report/).
+Degraded metrics are averaged over the 12 degraded conditions. The ViT is the least accurate model on clean images but the most robust under degradation, with the largest advantage under Gaussian noise and none under JPEG; ResNet-18 is no more robust than the plain CNN once clean accuracy is controlled for. All models are systematically overconfident on degraded images. Full per-condition results are in [`results/`](results/) and the discussion is in the Phase II report, [`report/CS421_Phase2_Group02.pdf`](report/CS421_Phase2_Group02.pdf).
 
 ## Status
 
